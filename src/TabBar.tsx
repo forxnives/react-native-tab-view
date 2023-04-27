@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   Animated,
   FlatList,
@@ -13,11 +13,11 @@ import {
   View,
   ViewStyle,
   ViewToken,
-} from 'react-native';
-import useLatestCallback from 'use-latest-callback';
+} from "react-native";
+import useLatestCallback from "use-latest-callback";
 
-import { Props as IndicatorProps, TabBarIndicator } from './TabBarIndicator';
-import { Props as TabBarItemProps, TabBarItem } from './TabBarItem';
+import { Props as IndicatorProps, TabBarIndicator } from "./TabBarIndicator";
+import { Props as TabBarItemProps, TabBarItem } from "./TabBarItem";
 import type {
   Event,
   Layout,
@@ -25,8 +25,8 @@ import type {
   Route,
   Scene,
   SceneRendererProps,
-} from './types';
-import { useAnimatedValue } from './useAnimatedValue';
+} from "./types";
+import { useAnimatedValue } from "./useAnimatedValue";
 
 export type Props<T extends Route> = SceneRendererProps & {
   navigationState: NavigationState<T>;
@@ -36,6 +36,7 @@ export type Props<T extends Route> = SceneRendererProps & {
   inactiveColor?: string;
   pressColor?: string;
   pressOpacity?: number;
+  handleCloseTab?: () => void;
   getLabelText?: (scene: Scene<T>) => string | undefined;
   getAccessible?: (scene: Scene<T>) => boolean | undefined;
   getAccessibilityLabel?: (scene: Scene<T>) => string | undefined;
@@ -90,15 +91,15 @@ const getComputedTabWidth = (
   tabWidths: { [key: string]: number },
   flattenedWidth: FlattenedTabWidth
 ) => {
-  if (flattenedWidth === 'auto') {
+  if (flattenedWidth === "auto") {
     return tabWidths[routes[index].key] || 0;
   }
 
   switch (typeof flattenedWidth) {
-    case 'number':
+    case "number":
       return flattenedWidth;
-    case 'string':
-      if (flattenedWidth.endsWith('%')) {
+    case "string":
+      if (flattenedWidth.endsWith("%")) {
         const width = parseFloat(flattenedWidth);
         if (Number.isFinite(width)) {
           return layout.width * (width / 100);
@@ -120,7 +121,7 @@ const getTranslateX = (
   maxScrollDistance: number
 ) =>
   Animated.multiply(
-    Platform.OS === 'android' && I18nManager.isRTL
+    Platform.OS === "android" && I18nManager.isRTL
       ? Animated.add(maxScrollDistance, Animated.multiply(scrollAmount, -1))
       : scrollAmount,
     I18nManager.isRTL ? 1 : -1
@@ -133,7 +134,7 @@ const getTabBarWidth = <T extends Route>({
   scrollEnabled,
   flattenedTabWidth,
   tabWidths,
-}: Pick<Props<T>, 'navigationState' | 'gap' | 'layout' | 'scrollEnabled'> & {
+}: Pick<Props<T>, "navigationState" | "gap" | "layout" | "scrollEnabled"> & {
   tabWidths: Record<string, number>;
   flattenedTabWidth: FlattenedTabWidth;
 }) => {
@@ -163,7 +164,7 @@ const normalizeScrollValue = <T extends Route>({
   tabWidths,
   value,
   flattenedTabWidth,
-}: Pick<Props<T>, 'layout' | 'navigationState' | 'gap' | 'scrollEnabled'> & {
+}: Pick<Props<T>, "layout" | "navigationState" | "gap" | "scrollEnabled"> & {
   tabWidths: Record<string, number>;
   value: number;
   flattenedTabWidth: FlattenedTabWidth;
@@ -179,7 +180,7 @@ const normalizeScrollValue = <T extends Route>({
   const maxDistance = getMaxScrollDistance(tabBarWidth, layout.width);
   const scrollValue = Math.max(Math.min(value, maxDistance), 0);
 
-  if (Platform.OS === 'android' && I18nManager.isRTL) {
+  if (Platform.OS === "android" && I18nManager.isRTL) {
     // On Android, scroll value is not applied in reverse in RTL
     // so we need to manually adjust it to apply correct value
     return maxDistance - scrollValue;
@@ -195,7 +196,7 @@ const getScrollAmount = <T extends Route>({
   scrollEnabled,
   flattenedTabWidth,
   tabWidths,
-}: Pick<Props<T>, 'layout' | 'navigationState' | 'scrollEnabled' | 'gap'> & {
+}: Pick<Props<T>, "layout" | "navigationState" | "scrollEnabled" | "gap"> & {
   tabWidths: Record<string, number>;
   flattenedTabWidth: FlattenedTabWidth;
 }) => {
@@ -237,12 +238,12 @@ const getScrollAmount = <T extends Route>({
 const getLabelTextDefault = ({ route }: Scene<Route>) => route.title;
 
 const getAccessibleDefault = ({ route }: Scene<Route>) =>
-  typeof route.accessible !== 'undefined' ? route.accessible : true;
+  typeof route.accessible !== "undefined" ? route.accessible : true;
 
 const getAccessibilityLabelDefault = ({ route }: Scene<Route>) =>
-  typeof route.accessibilityLabel === 'string'
+  typeof route.accessibilityLabel === "string"
     ? route.accessibilityLabel
-    : typeof route.title === 'string'
+    : typeof route.title === "string"
     ? route.title
     : undefined;
 
@@ -267,6 +268,7 @@ export function TabBar<T extends Route>({
   jumpTo,
   navigationState,
   position,
+  handleCloseTab,
   activeColor,
   bounces,
   contentContainerStyle,
@@ -296,7 +298,7 @@ export function TabBar<T extends Route>({
 
   const { routes } = navigationState;
   const flattenedTabWidth = getFlattenedTabWidth(tabStyle);
-  const isWidthDynamic = flattenedTabWidth === 'auto';
+  const isWidthDynamic = flattenedTabWidth === "auto";
   const scrollOffset = getScrollAmount({
     layout,
     navigationState,
@@ -310,7 +312,7 @@ export function TabBar<T extends Route>({
     Boolean(layout.width) &&
     routes
       .slice(0, navigationState.index)
-      .every((r) => typeof tabWidths[r.key] === 'number');
+      .every((r) => typeof tabWidths[r.key] === "number");
 
   React.useEffect(() => {
     if (isFirst.current) {
@@ -373,6 +375,7 @@ export function TabBar<T extends Route>({
         getAccessible: getAccessible,
         getLabelText: getLabelText,
         getTestID: getTestID,
+        handleCloseTab: handleCloseTab,
         renderBadge: renderBadge,
         renderIcon: renderIcon,
         renderLabel: renderLabel,
@@ -393,13 +396,13 @@ export function TabBar<T extends Route>({
                 routes
                   .slice(0, MEASURE_PER_BATCH)
                   .every(
-                    (r) => typeof measuredTabWidths.current[r.key] === 'number'
+                    (r) => typeof measuredTabWidths.current[r.key] === "number"
                   )
               ) {
                 setTabWidths({ ...measuredTabWidths.current });
               } else if (
                 routes.every(
-                  (r) => typeof measuredTabWidths.current[r.key] === 'number'
+                  (r) => typeof measuredTabWidths.current[r.key] === "number"
                 )
               ) {
                 // When we have measured widths for all of the tabs, we should updates the state
@@ -560,7 +563,7 @@ export function TabBar<T extends Route>({
           navigationState,
           jumpTo,
           width: isWidthDynamic
-            ? 'auto'
+            ? "auto"
             : `${(100 - separatorPercent) / routes.length}%`,
           style: indicatorStyle,
           getTabWidth: (i: number) =>
@@ -609,12 +612,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    overflow: Platform.select({ default: 'scroll', web: undefined }),
+    overflow: Platform.select({ default: "scroll", web: undefined }),
   },
   tabBar: {
-    backgroundColor: '#2196f3',
+    backgroundColor: "#2196f3",
     elevation: 4,
-    shadowColor: 'black',
+    shadowColor: "black",
     shadowOpacity: 0.1,
     shadowRadius: StyleSheet.hairlineWidth,
     shadowOffset: {
@@ -624,11 +627,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   tabContent: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
+    flexDirection: "row",
+    flexWrap: "nowrap",
   },
   indicatorContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,

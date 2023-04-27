@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   Animated,
   LayoutChangeEvent,
@@ -6,13 +6,14 @@ import {
   StyleProp,
   StyleSheet,
   TextStyle,
+  TouchableOpacity,
   View,
   ViewStyle,
-} from 'react-native';
-import useLatestCallback from 'use-latest-callback';
+} from "react-native";
+import useLatestCallback from "use-latest-callback";
 
-import { PlatformPressable } from './PlatformPressable';
-import type { NavigationState, Route, Scene } from './types';
+import { PlatformPressable } from "./PlatformPressable";
+import type { NavigationState, Route, Scene } from "./types";
 
 export type Props<T extends Route> = {
   position: Animated.AnimatedInterpolation<number>;
@@ -26,6 +27,7 @@ export type Props<T extends Route> = {
   getAccessible: (scene: Scene<T>) => boolean | undefined;
   getAccessibilityLabel: (scene: Scene<T>) => string | undefined;
   getTestID: (scene: Scene<T>) => string | undefined;
+  handleCloseTab?: () => void;
   renderLabel?: (scene: {
     route: T;
     focused: boolean;
@@ -46,8 +48,8 @@ export type Props<T extends Route> = {
   android_ripple?: PressableAndroidRippleConfig;
 };
 
-const DEFAULT_ACTIVE_COLOR = 'rgba(255, 255, 255, 1)';
-const DEFAULT_INACTIVE_COLOR = 'rgba(255, 255, 255, 0.7)';
+const DEFAULT_ACTIVE_COLOR = "rgba(255, 255, 255, 1)";
+const DEFAULT_INACTIVE_COLOR = "rgba(255, 255, 255, 0.7)";
 
 const getActiveOpacity = (
   position: Animated.AnimatedInterpolation<number>,
@@ -85,7 +87,7 @@ const getInactiveOpacity = (
 
 type TabBarItemInternalProps<T extends Route> = Omit<
   Props<T>,
-  'navigationState'
+  "navigationState"
 > & {
   isFocused: boolean;
   index: number;
@@ -98,6 +100,7 @@ const TabBarItemInternal = <T extends Route>({
   getLabelText,
   getTestID,
   onLongPress,
+  handleCloseTab,
   onPress,
   isFocused,
   position,
@@ -122,13 +125,13 @@ const TabBarItemInternal = <T extends Route>({
   const activeColor =
     activeColorCustom !== undefined
       ? activeColorCustom
-      : typeof labelColorFromStyle === 'string'
+      : typeof labelColorFromStyle === "string"
       ? labelColorFromStyle
       : DEFAULT_ACTIVE_COLOR;
   const inactiveColor =
     inactiveColorCustom !== undefined
       ? inactiveColorCustom
-      : typeof labelColorFromStyle === 'string'
+      : typeof labelColorFromStyle === "string"
       ? labelColorFromStyle
       : DEFAULT_INACTIVE_COLOR;
 
@@ -172,7 +175,7 @@ const TabBarItemInternal = <T extends Route>({
       : (labelProps: { route: T; color: string }) => {
           const labelText = getLabelText({ route: labelProps.route });
 
-          if (typeof labelText === 'string') {
+          if (typeof labelText === "string") {
             return (
               <Animated.Text
                 style={[
@@ -228,36 +231,42 @@ const TabBarItemInternal = <T extends Route>({
   let accessibilityLabel = getAccessibilityLabel(scene);
 
   accessibilityLabel =
-    typeof accessibilityLabel !== 'undefined'
+    typeof accessibilityLabel !== "undefined"
       ? accessibilityLabel
       : getLabelText(scene);
 
   const badge = renderBadge ? renderBadge(scene) : null;
 
   return (
-    <PlatformPressable
-      android_ripple={android_ripple}
-      testID={getTestID(scene)}
-      accessible={getAccessible(scene)}
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="tab"
-      accessibilityState={{ selected: isFocused }}
-      // @ts-ignore: this is to support older React Native versions
-      accessibilityStates={isFocused ? ['selected'] : []}
-      pressColor={pressColor}
-      pressOpacity={pressOpacity}
-      delayPressIn={0}
-      onLayout={onLayout}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      style={[styles.pressable, tabContainerStyle]}
-    >
-      <View pointerEvents="none" style={[styles.item, tabStyle]}>
-        {icon}
-        {label}
-        {badge != null ? <View style={styles.badge}>{badge}</View> : null}
-      </View>
-    </PlatformPressable>
+    <>
+      <PlatformPressable
+        android_ripple={android_ripple}
+        testID={getTestID(scene)}
+        accessible={getAccessible(scene)}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: isFocused }}
+        // @ts-ignore: this is to support older React Native versions
+        accessibilityStates={isFocused ? ["selected"] : []}
+        pressColor={pressColor}
+        pressOpacity={pressOpacity}
+        delayPressIn={0}
+        onLayout={onLayout}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={[styles.pressable, tabContainerStyle]}
+      >
+        <View pointerEvents="none" style={[styles.item, tabStyle]}>
+          {icon}
+          {label}
+          {badge != null ? <View style={styles.badge}>{badge}</View> : null}
+        </View>
+      </PlatformPressable>
+      <TouchableOpacity
+        onPress={handleCloseTab}
+        style={{ width: 30, height: 30, backgroundColor: "pink" }}
+      ></TouchableOpacity>
+    </>
   );
 };
 
@@ -291,27 +300,27 @@ export function TabBarItem<T extends Route>(props: Props<T>) {
 const styles = StyleSheet.create({
   label: {
     margin: 4,
-    backgroundColor: 'transparent',
-    textTransform: 'uppercase',
+    backgroundColor: "transparent",
+    textTransform: "uppercase",
   },
   icon: {
     margin: 2,
   },
   item: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 10,
     minHeight: 48,
   },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     right: 0,
   },
   pressable: {
     // The label is not pressable on Windows
     // Adding backgroundColor: 'transparent' seems to fix it
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
 });
