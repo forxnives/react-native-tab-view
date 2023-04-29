@@ -27,7 +27,7 @@ export type Props<T extends Route> = {
   getAccessible: (scene: Scene<T>) => boolean | undefined;
   getAccessibilityLabel: (scene: Scene<T>) => string | undefined;
   getTestID: (scene: Scene<T>) => string | undefined;
-  handleCloseTab?: () => void;
+  handleCloseTab?: (scene: Scene<T>) => void;
   renderLabel?: (scene: {
     route: T;
     focused: boolean;
@@ -169,6 +169,10 @@ const TabBarItemInternal = <T extends Route>({
     }
   }
 
+  const closeTab = () => {
+    if (handleCloseTab) handleCloseTab(scene);
+  };
+
   const renderLabel =
     renderLabelCustom !== undefined
       ? renderLabelCustom
@@ -236,7 +240,6 @@ const TabBarItemInternal = <T extends Route>({
       : getLabelText(scene);
 
   const badge = renderBadge ? renderBadge(scene) : null;
-
   return (
     <>
       <PlatformPressable
@@ -257,15 +260,21 @@ const TabBarItemInternal = <T extends Route>({
         style={[styles.pressable, tabContainerStyle]}
       >
         <View pointerEvents="none" style={[styles.item, tabStyle]}>
-          {icon}
           {label}
           {badge != null ? <View style={styles.badge}>{badge}</View> : null}
         </View>
       </PlatformPressable>
-      <TouchableOpacity
-        onPress={handleCloseTab}
-        style={{ width: 30, height: 30, backgroundColor: "pink" }}
-      ></TouchableOpacity>
+      <View
+        style={{
+          position: "absolute",
+          right: 0,
+          height: "100%",
+          width: 30,
+          justifyContent: "center",
+        }}
+      >
+        <TouchableOpacity onPress={closeTab}>{icon}</TouchableOpacity>
+      </View>
     </>
   );
 };
